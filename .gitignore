@@ -169,3 +169,4 @@ output.txt
 tabusearch_submit.py
 tabusearch_dev.py
 tabusearch_main.py
+test/test*/pred.txt
