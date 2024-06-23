@@ -150,3 +150,34 @@ class ClassCourseTeacherAssignmentProblem:
         if self.change_teacher(assignment) is not None:
             return
         self.change_time(assignment)
+        
+    def get_score(self, assignments, constraints):
+        score = 0
+        # Penalty
+        if 0 in constraints:
+            session_violations = self.check_same_session_time(assignments)
+        else :
+            session_violations = 0
+            
+        if 1 in constraints:
+            class_violations = self.check_class_schedule_conflicts(assignments)
+        else:
+            class_violations = 0
+            
+        if 2 in constraints:
+            teacher_violations = self.check_teacher_schedule_conflicts(assignments)
+        else:
+            teacher_violations = 0
+        
+        if 3 in constraints:
+                endtimelimit_violations = self.check_end_time_limit(assignments)
+        else: 
+            endtimelimit_violations = 0
+        
+        score -= 100 * (session_violations + class_violations + teacher_violations + endtimelimit_violations)
+            
+        for assignment in assignments:
+            if assignment[2] and assignment[3]:
+                score += 1
+                
+        return score

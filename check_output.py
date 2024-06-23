@@ -2,117 +2,7 @@ import argparse
 
 import numpy as np
 
-
-# Constraint
-# assignments (Class, Subject, Start time, Teacher)
-# Thời gian bắt đầu, kết thúc phải cùng buổi
-def check_same_session_time(assignments):
-    time_violation = 0
-    
-    for assignment in assignments:
-        # start_time // 6 - end_time // 6 = 0 
-        start_time_session = (assignment[2] - 1) // 6
-        end_time_session = ((assignment[2] + subject_periods[assignment[1]]) - 2) // 6
-        
-        if start_time_session != end_time_session:
-            # return False
-            time_violation += 1
-        
-    # return True
-    return time_violation
-            
-# Các lớp-môn mà cùng giáo viên dạy không trùng lịch
-def check_teacher_schedule_conflicts(assignments):
-    time_violation = 0
-    
-    # Mang luu trang thai cua cac giao vien tu tiet 1-60
-    teacher_periods = np.zeros((T + 1, 61), dtype=int) 
-    
-    for assignment in assignments:
-        if assignment[3] == 0:
-            continue
-        
-        start_time = assignment[2]
-        end_time = (assignment[2] + subject_periods[assignment[1]]) - 1
-        teacher = assignment[3]
-        if np.all(teacher_periods[teacher, start_time: end_time + 1] == 0):
-            teacher_periods[teacher, start_time: end_time + 1] = 1
-        else:
-            # return False
-            time_violation += 1
-        
-    # return True
-    return time_violation
-
-# Các môn của cùng lớp không trùng lịch
-def check_class_schedule_conflicts(assignments):
-    time_violation = 0
-    
-    # Mang luu trang thai cua cac lop tu tiet 1-60
-    classtable = np.zeros((N + 1, 61), dtype=int) 
-    
-    for assignment in assignments:
-        if assignment[2] == 0:
-            continue
-        
-        class_n = assignment[0]
-        start_time = assignment[2]
-        end_time = (assignment[2] + subject_periods[assignment[1]]) - 1
-        if np.all(classtable[class_n, start_time: end_time + 1] == 0):
-            classtable[class_n, start_time: end_time + 1] = 1
-        else: 
-            # return False
-            time_violation += 1
-        
-    # return True
-    return time_violation
-
-# Thời gian kết thúc không vượt quá 60 tiết
-def check_end_time_limit(assignments):
-    time_violation = 0
-    
-    for assignment in assignments:
-        # start_time // 6 - end_time // 6 = 0 
-        start_time_session = assignment[2]
-        end_time_session = ((assignment[2] + subject_periods[assignment[1]]) - 1)
-        
-        if end_time_session > 60:
-            # return False
-            time_violation += 1
-        
-    # return True
-    return time_violation
-
-def get_score(assignments, constraints):
-    score = 0
-    # Penalty
-    if 0 in constraints:
-        session_violations = check_same_session_time(assignments)
-    else :
-        session_violations = 0
-        
-    if 1 in constraints:
-        class_violations = check_class_schedule_conflicts(assignments)
-    else:
-        class_violations = 0
-        
-    if 2 in constraints:
-        teacher_violations = check_teacher_schedule_conflicts(assignments)
-    else:
-        teacher_violations = 0
-    
-    if 3 in constraints:
-        endtimelimit_violations = check_end_time_limit(assignments)
-    else: 
-        endtimelimit_violations = 0
-    
-    score -= 100 * (session_violations + class_violations + teacher_violations + endtimelimit_violations)
-        
-    for assignment in assignments:
-        if assignment[2] and assignment[3]:
-            score += 1
-            
-    return score
+from src.model.modeling import ClassCourseTeacherAssignmentProblem
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -164,7 +54,11 @@ if __name__ == "__main__":
         assignment = list(map(int, output[i].split()))
         assignments.append(assignment)
         
+    ########## RUN #############    
+    problem = ClassCourseTeacherAssignmentProblem(
+        N, T, class_subjects, subject_periods, None, None
+    )    
     # Score
-    print("SCORE: ", get_score(assignments, opt.constraints))
+    print("SCORE: ", problem.get_score(assignments, opt.constraints))
     
     
