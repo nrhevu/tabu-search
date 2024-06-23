@@ -32,7 +32,7 @@ class TabuSearch:
         tabu_tenure,
         max_steps,
         neighborhood_size,
-        constraints=[0, 1, 2],
+        constraints=[0, 1, 2, 3],
         print_interval=100,
         max_score=None,
     ):
@@ -76,9 +76,15 @@ class TabuSearch:
         return (
             "TABU SEARCH: \n"
             + "CURRENT STEPS: %d \n"
+            + "CURRENT SCORE: %d \n"
             + "BEST SCORE: %f \n"
             + "BEST MEMBER: %s \n\n"
-        ) % (self.cur_steps, self._score(self.best), str(self.best))
+        ) % (
+            self.cur_steps,
+            self._score(self.current),
+            self._score(self.best),
+            str(self.best),
+        )
 
     def __repr__(self):
         return self.__str__()
@@ -167,7 +173,9 @@ class TabuSearch:
                         self.best = deepcopy(self.current)
                     break
 
-            if self.max_score is not None and self._score(self.best) > self.max_score:
+            # print(self.tabu_list)
+
+            if self.max_score is not None and self._score(self.best) >= self.max_score:
                 if verbose:
                     print("TERMINATING - REACHED MAXIMUM SCORE")
                 return self.best, self._score(self.best)

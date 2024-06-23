@@ -13,14 +13,26 @@ class TabuSearchAlgorithm(TabuSearch):
 
     def __init__(
         self,
+        problem: ClassCourseTeacherAssignmentProblem,
         initial_state,
         tabu_tenure,
         max_steps,
-        problem: ClassCourseTeacherAssignmentProblem,
+        neighborhood_size,
+        constraints=[0, 1, 2],
+        print_interval=100,
+        max_score=None,
     ):
-        super().__init__(initial_state, tabu_tenure, max_steps)
+        super().__init__(
+            initial_state,
+            tabu_tenure,
+            max_steps,
+            neighborhood_size,
+            constraints,
+            print_interval,
+            max_score,
+        )
         self.problem = problem
-        CHANGE_STRATEGY = [
+        self.CHANGE_STRATEGY = [
             problem.change_teacher,
             problem.change_time,
             problem.change_both,

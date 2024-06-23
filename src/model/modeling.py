@@ -24,6 +24,17 @@ class ClassCourseTeacherAssignmentProblem:
 
         return assignments
     
+    def get_maximum_score(self):
+        result = self.initialize_state(prob = 1.0)
+        score = 0
+        final_result = []
+        for r in result:
+            if r[2] and r[3]:
+                final_result.append(r)
+                score += 1
+                
+        return score
+    
     ##################################################################################################
     # Constraint
     # assignments (Class, Subject, Start time, Teacher)
