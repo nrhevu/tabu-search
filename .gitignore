@@ -164,3 +164,8 @@ cython_debug/
 tabusearch_submit.py
 Test cases.zip
 Solid
+input.txt
+output.txt
+tabusearch_submit.py
+tabusearch_dev.py
+tabusearch_main.py
