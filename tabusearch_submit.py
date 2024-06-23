@@ -1,27 +1,19 @@
 import argparse
-import itertools
 import logging
 import math
 import os
 import time
-from abc import ABCMeta, abstractmethod
-from collections import deque
 from copy import deepcopy
 from random import choice, randint, random
+import itertools
+import glob
 
+import numpy as np 
+################################# Tabu Search ######################################################
+from abc import ABCMeta, abstractmethod
+from copy import deepcopy
+from collections import deque
 from numpy import argmax
-
-try:
-    import numpy as np 
-except:
-    import subprocess
-    import sys
-
-    def install(package):
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        
-    install('numpy')
-    import numpy as np
 
 
 class TabuSearch:
@@ -44,8 +36,8 @@ class TabuSearch:
     max_steps = None
     max_score = None
 
-    def __init__(self, initial_state, tabu_tenure, max_steps, neighborhood_size, 
-                 constraints = [0, 1, 2], print_interval=100, max_score=None):
+    def __init__(self, initial_state, tabu_tenure, max_steps, neighborhood_size,
+                 constraints = [0, 1, 2, 3], print_interval=100, max_score=None):
         """
         :param initial_state: initial state, should implement __eq__ or __cmp__
         :param tabu_size: number of states to keep in tabu list
@@ -85,9 +77,10 @@ class TabuSearch:
     def __str__(self):
         return ('TABU SEARCH: \n' +
                 'CURRENT STEPS: %d \n' +
+                'CURRENT SCORE: %d \n' +
                 'BEST SCORE: %f \n' +
                 'BEST MEMBER: %s \n\n') % \
-               (self.cur_steps, self._score(self.best), str(self.best))
+               (self.cur_steps, self._score(self.current), self._score(self.best), str(self.best))
 
     def __repr__(self):
         return self.__str__()
@@ -171,8 +164,10 @@ class TabuSearch:
                     if self._score(self.current) > self._score(self.best):
                         self.best = deepcopy(self.current)
                     break
+                
+            # print(self.tabu_list)
 
-            if self.max_score is not None and self._score(self.best) > self.max_score:
+            if self.max_score is not None and self._score(self.best) >= self.max_score:
                 if verbose:
                     print("TERMINATING - REACHED MAXIMUM SCORE")
                 return self.best, self._score(self.best)
@@ -253,7 +248,7 @@ def check_end_time_limit(assignments):
     
     for assignment in assignments:
         # start_time // 6 - end_time // 6 = 0 
-        start_time_session = assignment[2]
+        # start_time_session = assignment[2]
         end_time_session = ((assignment[2] + subject_periods[assignment[1]]) - 1)
         
         if end_time_session > 60:
@@ -360,6 +355,17 @@ def initialize_state(N, class_subjects, prob = 0.3):
             
     return assignments
 
+def get_maximum_score(N, class_subjects):
+    result = initialize_state(N, class_subjects, prob = 1.0)
+    score = 0
+    final_result = []
+    for r in result:
+        if r[2] and r[3]:
+            final_result.append(r)
+            score += 1
+            
+    return score
+
 def print_final_result(result):
     score = 0
     final_result = []
@@ -371,21 +377,32 @@ def print_final_result(result):
     print(score)
     for r in final_result:
         print(r[0], r[1], r[2], r[3])
+        
+def write_final_result(result, filename):
+    score = 0
+    final_result = []
+    for r in result:
+        if r[2] and r[3]:
+            final_result.append(r)
+            score += 1
+    
+    with open(filename, "w") as f:   
+        f.writelines(str(score) + "\n")
+        for r in final_result:
+            f.writelines(f"{r[0]} {r[1]} {r[2]} {r[3]}\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--tabu_tenure', type=int, default=10, help='tabu tenure size')
-    parser.add_argument('--max_steps', type=int, default=1000, help='max number of steps')
-    parser.add_argument('--neighborhood_size', type=int, default=15, help='neighborhood size')
-    parser.add_argument('--constraints', nargs='+', type=int, default=[1, 2, 3], 
-                        help='constraints for evaluating score:\n 0 - a class must be within the same session. \
-                                                               \n 1 - a class cannot have two subjects taught at the same time. \
-                                                               \n 2 - a teacher cannot teach two classes at the same time. \
-                                                               \n 3 - last class end time must not exceed 60')
+    parser.add_argument('--tabu_tenure', type=int, default=105, help='tabu tenure size')
+    parser.add_argument('--max_steps', type=int, default=500, help='max number of steps')
+    parser.add_argument('--neighborhood_size', type=int, default=70, help='neighborhood size')
+    parser.add_argument('--constraints', nargs='+', type=int, default=[1, 2], help='constraints for evaluating score:\n 0 - session constraint \n 1 - class schedule constraint \n 2 - teacher schedule constraint')
     parser.add_argument('--verbose', action='store_true', help='print progress')
     parser.add_argument('--interval', type=int, default=100, help='set interval of printing results')
     parser.add_argument('--score', action='store_true', help='print score')
     parser.add_argument('--time', action='store_true', help='print total running time')
+    parser.add_argument('--keyboard', action='store_true', help='input is obtained from the keyboard')
+    parser.add_argument('--file_path', type=str, default='input.txt', help='input is obtained from the file')
     
     opt = parser.parse_args()
     
@@ -422,12 +439,19 @@ if __name__ == "__main__":
         for s in six_multiples:
             for i in range(subject_periods[subject] - 1):
                 subject_times[subject].remove(s - i)
-
+    
+    # Initialize algorithm
+    if True:
+        max_score = get_maximum_score(N, class_subjects)
+        print("MAX_SCORE: ", max_score)
+    else:
+        max_score = None
+    
     start_time = time.time()
     # Initialize algorithm
     algorithm = Algorithm(initialize_state(N, class_subjects), opt.tabu_tenure, 
                           opt.max_steps, opt.neighborhood_size, 
-                          constraints=opt.constraints, print_interval=opt.interval, max_score=None)
+                          constraints=opt.constraints, print_interval=opt.interval, max_score=max_score)
     result, score = algorithm.run(verbose=opt.verbose)
             
     print_final_result(result)        
@@ -437,4 +461,3 @@ if __name__ == "__main__":
     
     if opt.time:
         print(f"Total run time: {time.time() - start_time}s")
-
