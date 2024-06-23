@@ -161,12 +161,10 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-tabusearch_submit.py
 Test cases.zip
 Solid
 input.txt
 output.txt
-tabusearch_submit.py
 tabusearch_dev.py
 tabusearch_main.py
 test/test*/pred.txt
